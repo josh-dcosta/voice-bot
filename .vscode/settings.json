@@ -1,0 +1,6 @@
+{
+    "python.analysis.extraPaths": [
+        "./alexa-skills-kit-sdk-for-python/ask-sdk-core",
+        "./alexa-skills-kit-sdk-for-python/ask-sdk-local-debug"
+    ]
+}
