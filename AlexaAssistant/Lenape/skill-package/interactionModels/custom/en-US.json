@@ -1,0 +1,160 @@
+{
+    "interactionModel": {
+        "languageModel": {
+            "invocationName": "lenape",
+            "intents": [
+                {
+                    "name": "AMAZON.CancelIntent",
+                    "samples": []
+                },
+                {
+                    "name": "AMAZON.HelpIntent",
+                    "samples": [
+                        "Help",
+                        "How does this work",
+                        "I need help",
+                        "I dont understand"
+                    ]
+                },
+                {
+                    "name": "AMAZON.StopIntent",
+                    "samples": []
+                },
+                {
+                    "name": "AMAZON.NavigateHomeIntent",
+                    "samples": []
+                },
+                {
+                    "name": "AMAZON.FallbackIntent",
+                    "samples": []
+                },
+                {
+                    "name": "AMAZON.MoreIntent",
+                    "samples": [
+                        "Yes Read More",
+                        "More"
+                    ]
+                },
+                {
+                    "name": "SearchEvents",
+                    "slots": [
+                        {
+                            "name": "EVENT_DATE",
+                            "type": "AMAZON.DATE"
+                        }
+                    ],
+                    "samples": [
+                        "What are the events on {EVENT_DATE}",
+                        "What are the events {EVENT_DATE}",
+                        "Read the events on {EVENT_DATE}",
+                        "Read the events {EVENT_DATE}",
+                        "List the events {EVENT_DATE}",
+                        "List Events on {EVENT_DATE}",
+                        "List events",
+                        "Get events on {EVENT_DATE}",
+                        "Get events this {EVENT_DATE}",
+                        "Get {EVENT_DATE} events",
+                        "Whats happening in my school",
+                        "Whats happening in the school",
+                        "What are the events in my school",
+                        "What are the events in the school",
+                        "What are the events in school {EVENT_DATE}",
+                        "Whats happening in school {EVENT_DATE}",
+                        "What are the events in my School {EVENT_DATE}",
+                        "What are the events in my School this {EVENT_DATE}",
+                        "What are the events in my School on {EVENT_DATE}",
+                        "What were the events in my School {EVENT_DATE}"
+                    ]
+                },
+                {
+                    "name": "ReadEvent",
+                    "slots": [
+                        {
+                            "name": "EVENT_NAME",
+                            "type": "EVENT_TYPES"
+                        }
+                    ],
+                    "samples": [
+                        "When is {EVENT_NAME} class",
+                        "When is {EVENT_NAME} competetion",
+                        "When is the {EVENT_NAME}",
+                        "When is the {EVENT_NAME} tournament",
+                        "When is the {EVENT_NAME} holiday"
+                    ]
+                }
+            ],
+            "types": [
+                {
+                    "name": "EVENT_TYPES",
+                    "values": [
+                        {
+                            "name": {
+                                "value": "Halloween Parade"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "Dominics Day"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "St. Patricks Day"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "Pride Night"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "Fair"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "Photo day"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "Festival"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "Competetion"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": " Back to School Night"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "Tournament"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "Concert"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "Practice"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "Tennis"
+                            }
+                        }
+                    ]
+                }
+            ]
+        }
+    }
+}
