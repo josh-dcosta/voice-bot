@@ -5,7 +5,7 @@
             "name": "Debug Alexa Skill (Python)",
             "type": "python",
             "request": "launch",
-            "program": "${workspaceFolder}/AlexaAssistant/HelloWorld/demoskill/lambda/local_debug.py",
+            "program": "${workspaceFolder}/AlexaAssistant/Lenape/lambda/local_debug.py",
             "console": "internalConsole"
         },
 

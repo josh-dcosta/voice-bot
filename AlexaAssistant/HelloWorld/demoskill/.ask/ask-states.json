@@ -3,7 +3,8 @@
   "profiles": {
     "default": {
       "skillMetadata": {
-        "eTag": "f2a3339c6988dfc7f0df58dd13fb143c"
+        "eTag": "4ba5ec9f60eb06f775009fdf5e22e734",
+        "lastDeployHash": "KN0S+MYZFtz6RsqAkI/+EuwVqO8="
       }
     }
   }
