@@ -4,6 +4,11 @@
 # Please visit https://alexa.design/cookbook for additional examples on implementing slots, dialog management,
 # session persistence, api calls, and more.
 # This sample is built using the handler classes approach in skill builder.
+import datetime
+from dateutil.relativedelta import relativedelta
+import re
+from icalendar import Calendar
+
 import logging
 import ask_sdk_core.utils as ask_utils
 
@@ -17,6 +22,73 @@ from ask_sdk_model import Response
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
+states = {
+    "SEARCHMODE": "_SEARCHMODE",
+    "DESCRIPTION": "_DESKMODE"
+}
+
+# URL to get the .ics
+URL = "https://calendar.google.com/calendar/ical/en.indian%23holiday%40group.v.calendar.google.com/public/basic.ics";
+
+# Skills name 
+skillName = "Events calendar:"
+
+# Message when the skill is first called
+welcomeMessage = "You can ask for the events today. Search for events by date. or say help. What would you like? "
+
+# Message for help intent
+HelpMessage = "Here are some things you can say: Is there an event today? Is there an event on the 18th of July? What are the events next week? Are there any events tomorrow?  What would you like to know?"
+
+descriptionStateHelpMessage = "Here are some things you can say: Tell me about event one"
+
+# Used when there is no data within a time period
+NoDataMessage = "Sorry there aren't any events scheduled. Would you like to search again?"
+
+# Used to tell user skill is closing
+shutdownMessage = "Ok see you again soon."
+
+# Message used when only 1 event is found allowing for difference in punctuation 
+oneEventMessage = "There is 1 event "
+
+# Message used when more than 1 event is found allowing for difference in punctuation 
+multipleEventMessage = "There are %d events "
+
+# text used after the number of events has been said
+scheduledEventMessage = "scheduled for this time frame. I've sent the details to your Alexa app: "
+
+firstThreeMessage = "Here are the first %d. "
+
+# the values within the {} are swapped out for variables
+eventSummary = "The %s event is, %s at %s on %s "
+
+# Only used for the card on the companion app
+cardContentSummary = "%s at %s on %s "
+
+# More info text
+haveEventsRepromt = "Give me an event number to hear more information."
+
+# Error if a date is out of range
+dateOutOfRange = "Date is out of range please choose another date"
+
+# Error if a event number is out of range
+eventOutOfRange = "Event number is out of range please choose another event"
+
+# Used when an event is asked for
+descriptionMessage = "Here's the description "
+
+# Used when an event is asked for
+killSkillMessage = "Ok, great, see you next time."
+
+eventNumberMoreInfoText = "You can say the event number for more information."
+
+# used for title on companion app
+cardTitle = "Events"
+
+# output for Alexa
+output = ""
+
+# stores events that are found to be in our date range
+relevantEvents = []
 
 class LaunchRequestHandler(AbstractRequestHandler):
     """Handler for Skill Launch."""
@@ -43,18 +115,99 @@ class SearchEventsIntentHandler(AbstractRequestHandler):
         return ask_utils.is_intent_name("SearchEvents")(handler_input)
 
     def handle(self, handler_input):
-        slots = handler_input.request_envelope.request.intent.slots
-        eventDate = slots["EVENT_DATE"].value
-        
-        # type: (HandlerInput) -> Response
-        speak_output = "I recognized your Search Event Intent"
+        eventList = []
 
-        return (
-            handler_input.response_builder
-                .speak(speak_output)
-                # .ask("add a reprompt if you want to keep the session open for the user to respond")
-                .response
-        )
+        slots = handler_input.request_envelope.request.intent.slots
+        if (slots is not None):
+            eventDate = slots["EVENT_DATE"].value
+        
+            # TODO
+            # Read the Icalendar File here....
+            
+            # type: (HandlerInput) -> Response
+            speak_output = "I recognized your Search Event Intent"
+
+            return (
+                handler_input.response_builder
+                    .speak(speak_output)
+                    # .ask("add a reprompt if you want to keep the session open for the user to respond")
+                    .response
+            )
+
+def getDateFromSlot(rawDate):
+    # try to parse data
+    date = datetime.strptime(rawDate, '%y-%m-%d')
+    eventDate = [] 
+
+    # if could not parse data must be one of the other formats
+    if (date is not None):
+        # to find out what type of date this is, we can split it and count how many parts we have see comments above.
+        res = rawDate.split("-")
+        # if we have 2 bits that include a 'W' week number
+        if (res.length == 2 and res[1].indexOf('W') > -1):
+            dates = getWeekData(res)
+            eventDate["startDate"] = datetime.strptime(dates.startDate, '%m/%d/%y')
+            eventDate["endDate"] = datetime.strptime(dates.endDate, '%m/%d/%y')
+            # if we have 3 bits, we could either have a valid date (which would have parsed already) or a weekend
+        elif (res.length == 3):
+            dates = getWeekendData(res)
+            eventDate["startDate"] = datetime.strptime(dates.startDate, '%m/%d/%y')
+            eventDate["endDate"] = datetime.strptime(dates.endDate, '%m/%d/%y')
+            # anything else would be out of range for this skill
+        else:
+            eventDate["error"] = dateOutOfRange
+        # original slot value was parsed correctly
+    else:
+        eventDate["startDate"] = datetime.datetime.now().strftime('%m/%d/%y')
+        eventDate["endDate"] = datetime.datetime.now().strftime('%m/%d/%y') + datetime.timedelta(hours=24)
+    return eventDate
+
+# Given a week number return the dates for both weekend days
+def getWeekendData(res):
+    if (res.length == 3):
+        saturdayIndex = 1
+        sundayIndex = 2
+        weekNumber = res[1].substring(1)
+
+        weekStart = w2date(res[0], weekNumber, saturdayIndex)
+        weekEnd = w2date(res[0], weekNumber, sundayIndex)
+
+        Dates = {
+            "startDate" : weekStart,
+            "endDate" : weekEnd,
+        }
+
+        return Dates
+
+# Given a week number return the dates for both the start date and the end date
+def getWeekData(res):
+    if (res.length == 2):
+
+        mondayIndex = -4
+        sundayIndex = 2
+
+        weekNumber = res[1].substring(1)
+
+        weekStart = w2date(res[0], weekNumber, mondayIndex)
+        weekEnd = w2date(res[0], weekNumber, sundayIndex)
+
+        Dates = {
+            "startDate" : weekStart,
+            "endDate" : weekEnd,
+        }
+
+        return Dates
+
+# Used to work out the dates given week numbers
+def w2date(year, week, day) :
+    Date = datetime.date(year, 1, 1) + relativedelta(weeks=+week)
+    Date = Date + datetime.timedelta(days=day)
+    return Date
+
+# Remove HTML tags from string
+def removeTags(str):
+    if (str):
+        return re.sub(r"/<(?:.|\n)*?>/gm","",str)
 
 class ReadEventIntentHandler(AbstractRequestHandler):
     """Handler for Read Event Intent."""
@@ -75,6 +228,23 @@ class ReadEventIntentHandler(AbstractRequestHandler):
                 # .ask("add a reprompt if you want to keep the session open for the user to respond")
                 .response
         )
+
+# Loops though the events from the iCal data, and checks which ones are between our start data and out end date
+def getEventsBeweenDates(startDate, endDate, eventList):
+
+    start = datetime.strptime(startDate, '%m/%d/%y')
+    end = datetime.strptime(endDate, '%m/%d/%y')
+
+    data = []
+
+    for i in range(0,eventList.length,1):
+        if (start <= eventList[i].start and end >= eventList[i].start):
+            data.push(eventList[i])
+
+    print("FOUND " + data.length + " events between those times")
+
+    return data
+
 
 class HelpIntentHandler(AbstractRequestHandler):
     """Handler for Help Intent."""

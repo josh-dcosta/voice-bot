@@ -1,0 +1,20 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Debug Alexa Skill (Python)",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/lambda/local_debug.py",
+            "console": "internalConsole"
+        },
+
+        {
+            "name": "Python: Current File",
+            "type": "python",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal"
+        }
+    ]
+}
