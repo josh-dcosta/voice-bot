@@ -265,7 +265,7 @@ class SearchEventsIntentHandler(AbstractRequestHandler):
                             output += scheduledEventMessage;
 
                             if (relevantEvents.length > 1):
-                                output += firstThreeMessage.format(firstThreeMessage, relevantEvents.length > 3 ? 3 : relevantEvents.length)
+                                output += firstThreeMessage.format(firstThreeMessage, x = 3 if (relevantEvents.length > 3 ) else relevantEvents.length)
                         
                             if (relevantEvents[0] is not None):
                                 date =  datetime.strptime(relevantEvents[0].start, '%Y%m%d')
