@@ -176,11 +176,8 @@ def getEventsBeweenDates(startDate, endDate, eventList):
 def getDateFromSlot(rawDate):
     # try to parse data
     date = None
-    eventDate = {
-                    "startDate" : None,
-                    "endDate" : None,
-                    "error" : None
-                }
+    eventDate = {}
+    
     try:
         date = datetime.strptime(rawDate, '%Y-%m-%d')
     except:
@@ -193,20 +190,20 @@ def getDateFromSlot(rawDate):
         # if we have 2 bits that include a 'W' week number
         if (len(res) == 2 and res[1].index('W') > -1):
             dates = getWeekData(res)
-            eventDate["startDate"] = dates.startDate.strftime('%m/%d/%Y')
-            eventDate["endDate"] = dates.endDate.strftime('%m/%d/%Y')
+            eventDate.add("startDate",dates.startDate.strftime('%m/%d/%Y'))
+            eventDate['endDate'] = dates.endDate.strftime('%m/%d/%Y')
             # if we have 3 bits, we could either have a valid date (which would have parsed already) or a weekend
         elif (len(res) == 3):
             dates = getWeekendData(res)
-            eventDate["startDate"] = dates.startDate.strftime('%m/%d/%Y')
-            eventDate["endDate"] = dates.endDate.strftime('%m/%d/%Y')
+            eventDate['startDate'] = dates.startDate.strftime('%m/%d/%Y')
+            eventDate['endDate'] = dates.endDate.strftime('%m/%d/%Y')
             # anything else would be out of range for this skill
         else:
-            eventDate["error"] = dateOutOfRange
+            eventDate['error'] = dateOutOfRange
         # original slot value was parsed correctly
     else:
-        eventDate["startDate"] = date.strftime('%m/%d/%Y')
-        eventDate["endDate"] = (date + datetime.timedelta(hours=24)).strftime('%m/%d/%Y')
+        eventDate['startDate'] = date.strftime('%m/%d/%Y')
+        eventDate['endDate'] = (date + datetime.timedelta(hours=24)).strftime('%m/%d/%Y')
 
     return eventDate
 
