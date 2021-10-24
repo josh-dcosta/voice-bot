@@ -7,8 +7,9 @@
 import datetime
 from dateutil.relativedelta import relativedelta
 import re
-from icalendar import Calendar, Event
+from icalendar import Calendar, Event, vDatetime
 import urllib.request
+import certifi
 
 import logging
 import ask_sdk_core.utils as ask_utils
@@ -93,8 +94,8 @@ output = ""
 relevantEvents = []
 
 def getCalendar(calendarUrl, callback):
-    calendarData = urllib.request.urlopen(calendarUrl).read()
-    callback(calendarData)
+    calendarData = urllib.request.urlopen(calendarUrl,cafile=certifi.where()).read()
+    return callback(calendarData)
 
 def readCalendar(calendarData):
     eventsData = []
@@ -102,18 +103,18 @@ def readCalendar(calendarData):
     for event in showCalHome.walk('VEVENT'):
         event = {
                         "summary": event.get('summary'),
-                        "start": event.get('dtstart')
+                        "start": datetime.date(event.get('dtstart').dt.year,event.get('dtstart').dt.month,event.get('dtstart').dt.day).strftime('%m/%d/%Y')
                     }
         # Add the newly created object to an array for use later.
-        eventsData.push(eventsData)
+        eventsData.append(event)
 
     return eventsData
 
 
 # Used to work out the dates given week numbers
 def w2date(year, week, day) :
-    Date = datetime.date(year, 1, 1) + relativedelta(weeks=+week)
-    Date = Date + datetime.timedelta(days=day)
+    Date = datetime.date(int(year), 1, 1) + relativedelta(weeks=+int(week))
+    Date = Date + datetime.timedelta(days=int(day))
     return Date
 
 # Remove HTML tags from string
@@ -123,10 +124,10 @@ def removeTags(str):
 
 # Given a week number return the dates for both weekend days
 def getWeekendData(res):
-    if (res.length == 3):
+    if (len(res) == 3):
         saturdayIndex = 1
         sundayIndex = 2
-        weekNumber = res[1].substring(1)
+        weekNumber = res[1][1:]
 
         weekStart = w2date(res[0], weekNumber, saturdayIndex)
         weekEnd = w2date(res[0], weekNumber, sundayIndex)
@@ -140,12 +141,12 @@ def getWeekendData(res):
 
 # Given a week number return the dates for both the start date and the end date
 def getWeekData(res):
-    if (res.length == 2):
+    if (len(res) == 2):
 
         mondayIndex = -4
         sundayIndex = 2
 
-        weekNumber = res[1].substring(1)
+        weekNumber = res[1][1:]
 
         weekStart = w2date(res[0], weekNumber, mondayIndex)
         weekEnd = w2date(res[0], weekNumber, sundayIndex)
@@ -160,45 +161,49 @@ def getWeekData(res):
 # Loops though the events from the iCal data, and checks which ones are between our start data and out end date
 def getEventsBeweenDates(startDate, endDate, eventList):
 
-    start = datetime.strptime(startDate, '%m/%d/%y')
-    end = datetime.strptime(endDate, '%m/%d/%y')
-
+    start = datetime.strptime(startDate, '%m/%d/%Y')
+    end = datetime.strptime(endDate, '%m/%d/%Y')
     data = []
 
-    for i in range(0,eventList.length,1):
+    for i in range(0,len(eventList),1):
         if (start <= eventList[i].start and end >= eventList[i].start):
-            data.push(eventList[i])
+            data.add(eventList[i])
 
-    print("FOUND " + data.length + " events between those times")
+    print("FOUND " + len(data) + " events between those times")
 
     return data
 
 def getDateFromSlot(rawDate):
     # try to parse data
-    date = datetime.strptime(rawDate, '%y-%m-%d')
+    date = None
     eventDate = [] 
+    try:
+        date = datetime.strptime(rawDate, '%Y-%m-%d')
+    except:
+        pass
 
     # if could not parse data must be one of the other formats
-    if (date is not None):
+    if (date is None):
         # to find out what type of date this is, we can split it and count how many parts we have see comments above.
         res = rawDate.split("-")
         # if we have 2 bits that include a 'W' week number
-        if (res.length == 2 and res[1].indexOf('W') > -1):
+        if (len(res) == 2 and res[1].index('W') > -1):
             dates = getWeekData(res)
-            eventDate["startDate"] = datetime.strptime(dates.startDate, '%m/%d/%y')
-            eventDate["endDate"] = datetime.strptime(dates.endDate, '%m/%d/%y')
+            eventDate["startDate"] = dates.startDate.strftime('%m/%d/%Y')
+            eventDate["endDate"] = dates.endDate.strftime('%m/%d/%Y')
             # if we have 3 bits, we could either have a valid date (which would have parsed already) or a weekend
-        elif (res.length == 3):
+        elif (len(res) == 3):
             dates = getWeekendData(res)
-            eventDate["startDate"] = datetime.strptime(dates.startDate, '%m/%d/%y')
-            eventDate["endDate"] = datetime.strptime(dates.endDate, '%m/%d/%y')
+            eventDate["startDate"] = dates.startDate.strftime('%m/%d/%Y')
+            eventDate["endDate"] = dates.endDate.strftime('%m/%d/%Y')
             # anything else would be out of range for this skill
         else:
             eventDate["error"] = dateOutOfRange
         # original slot value was parsed correctly
     else:
-        eventDate["startDate"] = datetime.datetime.now().strftime('%m/%d/%y')
-        eventDate["endDate"] = datetime.datetime.now().strftime('%m/%d/%y') + datetime.timedelta(hours=24)
+        eventDate["startDate"] = date.strftime('%m/%d/%Y')
+        eventDate["endDate"] = (date + datetime.timedelta(hours=24)).strftime('%m/%d/%Y')
+
     return eventDate
 
 
@@ -212,7 +217,7 @@ class LaunchRequestHandler(AbstractRequestHandler):
     def handle(self, handler_input):
         # type: (HandlerInput) -> Response
         parent = self
-        parent.handler.state = states.SEARCHMODE
+        parent.state = states['SEARCHMODE']
 
         speak_output = "Welcome, I can tell you the events in your school. You can say, What are the events tomorrow?"
 
@@ -231,7 +236,6 @@ class SearchEventsIntentHandler(AbstractRequestHandler):
 
     def handle(self, handler_input):
         parent = self
-        eventsList = []
 
         slots = handler_input.request_envelope.request.intent.slots
 
@@ -243,7 +247,7 @@ class SearchEventsIntentHandler(AbstractRequestHandler):
                 eventList = getCalendar(URL, readCalendar)
                 
                 # Check we have data
-                if (eventList.length > 0):
+                if (len(eventList) > 0):
                     # Read slot data and parse out a usable date 
                     eventDate = getDateFromSlot(slotValue)
 
@@ -252,20 +256,20 @@ class SearchEventsIntentHandler(AbstractRequestHandler):
                         # initiate a new array, and this time fill it with events that fit between the two dates
                         relevantEvents = getEventsBeweenDates(eventDate.startDate, eventDate.endDate, eventList)
 
-                        if (relevantEvents.length > 0):
+                        if (len(relevantEvents)> 0):
                             # change state to description
-                            parent.handler.state = states.DESCRIPTION
+                            parent.state = states['DESCRIPTION']
 
                             # Create output for both Alexa and the content card
                             cardContent = ""
                             output = oneEventMessage;
-                            if (relevantEvents.length > 1):
-                                output = multipleEventMessage.format(relevantEvents.length)
+                            if (len(relevantEvents) > 1):
+                                output = multipleEventMessage.format(len(relevantEvents))
                         
                             output += scheduledEventMessage;
 
-                            if (relevantEvents.length > 1):
-                                output += firstThreeMessage.format(firstThreeMessage, x = 3 if (relevantEvents.length > 3 ) else relevantEvents.length)
+                            if (len(relevantEvents) > 1):
+                                output += firstThreeMessage.format(firstThreeMessage, x = 3 if (len(relevantEvents) > 3 ) else len(relevantEvents))
                         
                             if (relevantEvents[0] is not None):
                                 date =  datetime.strptime(relevantEvents[0].start, '%Y%m%d')
@@ -279,7 +283,7 @@ class SearchEventsIntentHandler(AbstractRequestHandler):
                                 date =  datetime.strptime(relevantEvents[3].start, '%Y%m%d')
                                 output += eventSummary.format(eventSummary, "Third", relevantEvents[2].summary, date.strftime('%A, %d. %B %Y') + ".");
                             
-                            for i in range(0,relevantEvents.length, 1):
+                            for i in range(0,len(relevantEvents), 1):
                                 date = datetime.strptime(relevantEvents[i].start, '%Y%m%d')
                                 cardContent += cardContentSummary.format(cardContentSummary, relevantEvents[i].summary, date.strftime('%A, %d. %B %Y') + "\n\n");
                         
