@@ -176,7 +176,7 @@ def getEventsBeweenDates(startDate, endDate, eventList):
 def getDateFromSlot(rawDate):
     # try to parse data
     date = None
-    eventDate = {}
+    eventDate = {"startDate":"","endDate":"","error":""}
     
     try:
         date = datetime.strptime(rawDate, '%Y-%m-%d')
