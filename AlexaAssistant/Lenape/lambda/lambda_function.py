@@ -190,7 +190,7 @@ def getDateFromSlot(rawDate):
         # if we have 2 bits that include a 'W' week number
         if (len(res) == 2 and res[1].index('W') > -1):
             dates = getWeekData(res)
-            eventDate.add("startDate",dates.startDate.strftime('%m/%d/%Y'))
+            eventDate['tartDate'] = dates.startDate.strftime('%m/%d/%Y')
             eventDate['endDate'] = dates.endDate.strftime('%m/%d/%Y')
             # if we have 3 bits, we could either have a valid date (which would have parsed already) or a weekend
         elif (len(res) == 3):
