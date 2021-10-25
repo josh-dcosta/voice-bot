@@ -18,6 +18,8 @@ from ask_sdk_core.skill_builder import SkillBuilder
 from ask_sdk_core.dispatch_components import AbstractRequestHandler
 from ask_sdk_core.dispatch_components import AbstractExceptionHandler
 from ask_sdk_core.handler_input import HandlerInput
+from ask_sdk_model import Response
+from ask_sdk_model.ui import SimpleCard
 
 from ask_sdk_model import Response
 import icalendar
@@ -68,7 +70,7 @@ eventSummary = "The {} event is, {} on {} "
 cardContentSummary = "{} on {} "
 
 # More info text
-haveEventsRepromt = "Give me an event number to hear more information."
+haveEventsRepromt = "You ask by event name also to hear more information."
 
 # Error if a date is out of range
 dateOutOfRange = "Date is out of range please choose another date"
@@ -168,7 +170,7 @@ def getEventsBeweenDates(startDate, endDate, eventList):
     for i in range(0,len(eventList),1):
         if (start <= datetime.datetime.strptime(eventList[i]['start'], '%m/%d/%Y') and end >= datetime.datetime.strptime(eventList[i]['start'], '%m/%d/%Y')):
             data.append(eventList[i])
-            
+
     return data
 
 def getDateFromSlot(rawDate):
@@ -177,7 +179,7 @@ def getDateFromSlot(rawDate):
     eventDate = {}
     
     try:
-        date = datetime.strptime(rawDate, '%Y-%m-%d')
+        date = datetime.datetime.strptime(rawDate, '%Y-%m-%d')
     except:
         pass
 
@@ -268,66 +270,52 @@ class SearchEventsIntentHandler(AbstractRequestHandler):
                             output += scheduledEventMessage;
 
                             if (len(relevantEvents) > 1):
-                                output += firstThreeMessage.format(firstThreeMessage, x = 3 if (len(relevantEvents) > 3 ) else len(relevantEvents))
+                                x = int(3)
+                                if len(relevantEvents) > 3:
+                                    x = len(relevantEvents)
+
+                                output += firstThreeMessage.format(x)
                         
-                            if (relevantEvents[0] is not None):
-                                date =  datetime.strptime(relevantEvents[0]['start'], '%Y%m%d')
-                                output += eventSummary.format(eventSummary, "First", relevantEvents[0]['summary'], date.strftime('%A, %d. %B %Y') + ".");
+                            if (len(relevantEvents) > 0):
+                                date =  datetime.datetime.strptime(relevantEvents[0]['start'], '%m/%d/%Y')
+                                output += eventSummary.format("First", relevantEvents[0]['summary'], date.strftime('%A, %d. %B %Y') + ".");
                         
-                            if (relevantEvents[1]):
-                                date =  datetime.strptime(relevantEvents[1]['start'], '%Y%m%d')
-                                output += eventSummary.format(eventSummary, "Second", relevantEvents[1]['summary'], date.strftime('%A, %d. %B %Y') + ".");
+                            if (len(relevantEvents) > 1):
+                                date =  datetime.datetime.strptime(relevantEvents[1]['start'], '%m/%d/%Y')
+                                output += eventSummary.format("Second", relevantEvents[1]['summary'], date.strftime('%A, %d. %B %Y') + ".");
                             
-                            if (relevantEvents[2]):
-                                date =  datetime.strptime(relevantEvents[3]['start'], '%Y%m%d')
-                                output += eventSummary.format(eventSummary, "Third", relevantEvents[2]['summary'], date.strftime('%A, %d. %B %Y') + ".");
+                            if (len(relevantEvents) > 2):
+                                date =  datetime.datetime.strptime(relevantEvents[2]['start'], '%m/%d/%Y')
+                                output += eventSummary.format("Third", relevantEvents[2]['summary'], date.strftime('%A, %d. %B %Y') + ".");
                             
                             for i in range(0,len(relevantEvents), 1):
-                                date = datetime.strptime(relevantEvents[i]['start'], '%Y%m%d')
-                                cardContent += cardContentSummary.format(cardContentSummary, relevantEvents[i]['summary'], date.strftime('%A, %d. %B %Y') + "\n\n");
+                                date = datetime.datetime.strptime(relevantEvents[i]['start'], '%m/%d/%Y')
+                                cardContent += cardContentSummary.format(relevantEvents[i]['summary'], date.strftime('%A, %d. %B %Y') + "\n\n");
                         
                             output += eventNumberMoreInfoText;
 
-                            return (
-                                handler_input.response_builder
-                                    .withSimpleCard(cardTitle,cardContent)
-                                    .speak(output)
-                                    .ask(haveEventsRepromt)
-                                    .response
-                                )  
+                            handler_input.response_builder.speak(output).ask(haveEventsRepromt) \
+                                            .set_card(SimpleCard(cardTitle, cardContent))
+
+                            return handler_input.response_builder.response
                         else:
                             output = NoDataMessage
-                            return (
-                                handler_input.response_builder
-                                    .ask(output)
-                                    .response
-                                )
+                            handler_input.response_builder.ask(output)
+                            return handler_input.response_builder.response
                     else:
                         output = NoDataMessage
-                        return (
-                                handler_input.response_builder
-                                    .ask(output)
-                                    .response
-                                )
+                        handler_input.response_builder.ask(output)
+                        return handler_input.response_builder.response
                 else:
                     output = NoDataMessage
-                    return (
-                            handler_input.response_builder
-                                .ask(output)
-                                .response
-                            )
+                    handler_input.response_builder.ask(output)
+                    return handler_input.response_builder.response
             else:
-             return (
-                    handler_input.response_builder
-                        .ask("I'm sorry.  What day did you want me to look for events?", "I'm sorry.  What day did you want me to look for events?")
-                        .response
-                    )
+                handler_input.response_builder.ask("I'm sorry.  What day did you want me to look for events?", "I'm sorry.  What day did you want me to look for events?")
+                return handler_input.response_builder.response
         else:
-             return (
-                    handler_input.response_builder
-                        .ask("I'm sorry.  What day did you want me to look for events?", "I'm sorry.  What day did you want me to look for events?")
-                        .response
-                    )
+            handler_input.response_builder.ask("I'm sorry.  What day did you want me to look for events?", "I'm sorry.  What day did you want me to look for events?")
+            return handler_input.response_builder.response
        
 class ReadEventIntentHandler(AbstractRequestHandler):
     """Handler for Read Event Intent."""
