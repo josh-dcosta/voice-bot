@@ -161,22 +161,20 @@ def getWeekData(res):
 # Loops though the events from the iCal data, and checks which ones are between our start data and out end date
 def getEventsBeweenDates(startDate, endDate, eventList):
 
-    start = datetime.strptime(startDate, '%m/%d/%Y')
-    end = datetime.strptime(endDate, '%m/%d/%Y')
+    start = datetime.datetime.strptime(startDate, '%m/%d/%Y')
+    end = datetime.datetime.strptime(endDate, '%m/%d/%Y')
     data = []
 
     for i in range(0,len(eventList),1):
-        if (start <= eventList[i].start and end >= eventList[i].start):
-            data.add(eventList[i])
-
-    print("FOUND " + len(data) + " events between those times")
-
+        if (start <= datetime.datetime.strptime(eventList[i]['start'], '%m/%d/%Y') and end >= datetime.datetime.strptime(eventList[i]['start'], '%m/%d/%Y')):
+            data.append(eventList[i])
+            
     return data
 
 def getDateFromSlot(rawDate):
     # try to parse data
     date = None
-    eventDate = {"startDate":"","endDate":"","error":""}
+    eventDate = {}
     
     try:
         date = datetime.strptime(rawDate, '%Y-%m-%d')
@@ -190,13 +188,13 @@ def getDateFromSlot(rawDate):
         # if we have 2 bits that include a 'W' week number
         if (len(res) == 2 and res[1].index('W') > -1):
             dates = getWeekData(res)
-            eventDate['startDate'] = dates.startDate.strftime('%m/%d/%Y')
-            eventDate['endDate'] = dates.endDate.strftime('%m/%d/%Y')
+            eventDate['startDate'] = dates['startDate'].strftime('%m/%d/%Y')
+            eventDate['endDate'] = dates['endDate'].strftime('%m/%d/%Y')
             # if we have 3 bits, we could either have a valid date (which would have parsed already) or a weekend
         elif (len(res) == 3):
             dates = getWeekendData(res)
-            eventDate['startDate'] = dates.startDate.strftime('%m/%d/%Y')
-            eventDate['endDate'] = dates.endDate.strftime('%m/%d/%Y')
+            eventDate['startDate'] = dates['startDate'].strftime('%m/%d/%Y')
+            eventDate['endDate'] = dates['endDate'].strftime('%m/%d/%Y')
             # anything else would be out of range for this skill
         else:
             eventDate['error'] = dateOutOfRange
@@ -253,9 +251,9 @@ class SearchEventsIntentHandler(AbstractRequestHandler):
                     eventDate = getDateFromSlot(slotValue)
 
                     # Check we have both a start and end date
-                    if (eventDate.startDate and eventDate.endDate):
+                    if (eventDate['startDate'] is not None and eventDate['endDate']is not None):
                         # initiate a new array, and this time fill it with events that fit between the two dates
-                        relevantEvents = getEventsBeweenDates(eventDate.startDate, eventDate.endDate, eventList)
+                        relevantEvents = getEventsBeweenDates(eventDate['startDate'], eventDate['endDate'], eventList)
 
                         if (len(relevantEvents)> 0):
                             # change state to description
@@ -273,20 +271,20 @@ class SearchEventsIntentHandler(AbstractRequestHandler):
                                 output += firstThreeMessage.format(firstThreeMessage, x = 3 if (len(relevantEvents) > 3 ) else len(relevantEvents))
                         
                             if (relevantEvents[0] is not None):
-                                date =  datetime.strptime(relevantEvents[0].start, '%Y%m%d')
-                                output += eventSummary.format(eventSummary, "First", relevantEvents[0].summary, date.strftime('%A, %d. %B %Y') + ".");
+                                date =  datetime.strptime(relevantEvents[0]['start'], '%Y%m%d')
+                                output += eventSummary.format(eventSummary, "First", relevantEvents[0]['summary'], date.strftime('%A, %d. %B %Y') + ".");
                         
                             if (relevantEvents[1]):
-                                date =  datetime.strptime(relevantEvents[1].start, '%Y%m%d')
-                                output += eventSummary.format(eventSummary, "Second", relevantEvents[1].summary, date.strftime('%A, %d. %B %Y') + ".");
+                                date =  datetime.strptime(relevantEvents[1]['start'], '%Y%m%d')
+                                output += eventSummary.format(eventSummary, "Second", relevantEvents[1]['summary'], date.strftime('%A, %d. %B %Y') + ".");
                             
                             if (relevantEvents[2]):
-                                date =  datetime.strptime(relevantEvents[3].start, '%Y%m%d')
-                                output += eventSummary.format(eventSummary, "Third", relevantEvents[2].summary, date.strftime('%A, %d. %B %Y') + ".");
+                                date =  datetime.strptime(relevantEvents[3]['start'], '%Y%m%d')
+                                output += eventSummary.format(eventSummary, "Third", relevantEvents[2]['summary'], date.strftime('%A, %d. %B %Y') + ".");
                             
                             for i in range(0,len(relevantEvents), 1):
-                                date = datetime.strptime(relevantEvents[i].start, '%Y%m%d')
-                                cardContent += cardContentSummary.format(cardContentSummary, relevantEvents[i].summary, date.strftime('%A, %d. %B %Y') + "\n\n");
+                                date = datetime.strptime(relevantEvents[i]['start'], '%Y%m%d')
+                                cardContent += cardContentSummary.format(cardContentSummary, relevantEvents[i]['summary'], date.strftime('%A, %d. %B %Y') + "\n\n");
                         
                             output += eventNumberMoreInfoText;
 
