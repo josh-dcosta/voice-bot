@@ -75,6 +75,7 @@
                         }
                     ],
                     "samples": [
+                        "When is {EVENT_NAME}",
                         "When is {EVENT_NAME} class",
                         "When is {EVENT_NAME} competetion",
                         "When is the {EVENT_NAME}",
