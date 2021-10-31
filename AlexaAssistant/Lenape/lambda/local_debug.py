@@ -2,7 +2,7 @@ from ask_sdk_local_debug.local_debugger_invoker import LocalDebuggerInvoker
 
 if __name__ == "__main__":
     LocalDebuggerInvoker([
-        '--accessToken', "Atza|IwEBILUf5l2Bn7ZFro2OcfAIg0LoUvjirF8l0ualkZJBjWTQWTN-Iwixmuu-y4gOVK8fo41Tb1-dHtfDuna_QyK3k1ijDiR_qhmNorpiPPG05ryoeXdcCkrt_BmdQpV4IH0uLumJaXd1K_Q31TVkyhcWz-ybVqVE2lO_kPB7Y95PonSWFmd5N5kVpC7MPkSRJs2CblrFJTVgdBJ4OH34BPGydM-4lhOZEHwPPc6YepMGiS72-zsO_Pw76uTAV3OxCv_CNhfTJlffUg95ufejp9x2Csmx_0APPYIllt8DFtqAJo0RlCw9GwuCm2allgWPfw3Tv1YehxH6a5RYMlopuFOnWSl4hYuQu8TRIVeYZt6ee3MfxA",
+        '--accessToken', "Atza|IwEBIAAfv9Q-krH83BrmcV9b1ojj9WiIv677ZaiJGtcSuXcBC5s0zVScWxcWwIvMn8royS5djrluPfTGM-caRSY1SB-EitKf_Zq1RnqUauv0BTks5HRSTaz8wRi-5kDP1H5lRJy5r0zRBqWA32VUYmQ6RfCPA7KVG43TFHcS1-kD23kpjfjRZ_TfVDVx7hDmh_pTTjUObaQH1xuzZyY6d9QHL-quYZUn4vHLAmQLtMXD2Fn1zeIbv1g15OKtp16FGQpP5ZKIrcvbl0myHo4GqP8n2Y4vnkLFlV0Fa8NcKe-ewNwbe77AXajfyn5skVw3yomorcUHOddXC9DB5xwBvkqmc0XA5_Hd-FTgPAGuiMi-oIwvfg",
         '--skillId', 'amzn1.ask.skill.2c3c56f7-567b-4472-a934-4dec76db90fb',
         '--skillHandler', 'lambda_handler',
         '--skillFilePath', '/Users/joshuadcosta/Documents/projects/Python-2/AlexaAssistant/Lenape/lambda/lambda_function.py',
