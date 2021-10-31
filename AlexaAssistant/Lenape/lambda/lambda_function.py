@@ -47,7 +47,13 @@ HelpMessage = "Here are some things you can say: Is there an event today? Is the
 descriptionStateHelpMessage = "Here are some things you can say: Tell me about event one"
 
 # Used when there is no data within a time period
-NoDataMessage = "Sorry there aren't any events scheduled. Would you like to search again?"
+NoDataMessage = "Sorry there aren't any events scheduled."
+
+# Used when there is no data within a time period
+NoDataMessage2 = "Sorry there aren't any events by that name."
+
+# Used when there is no data within a time period
+NoDataMessageAsk = "Would you like to search again?"
 
 # Used to tell user skill is closing
 shutdownMessage = "Ok see you again soon."
@@ -61,6 +67,9 @@ multipleEventMessage = "There are {:n} events "
 # text used after the number of events has been said
 scheduledEventMessage = "scheduled for this time frame. I've sent the details to your Alexa app: "
 
+# text used after the number of events has been said
+foundEventMessage = "I've sent the details to your Alexa app: "
+
 firstThreeMessage = "Here are the first {:n}. "
 
 # the values within the {} are swapped out for variables
@@ -71,6 +80,9 @@ cardContentSummary = "{} on {} "
 
 # More info text
 haveEventsRepromt = "You ask by event name also to hear more information."
+
+# More info text
+haveEventsRepromt2 = "You ask by event by date also to hear more information"
 
 # Error if a date is out of range
 dateOutOfRange = "Date is out of range please choose another date"
@@ -162,7 +174,6 @@ def getWeekData(res):
 
 # Loops though the events from the iCal data, and checks which ones are between our start data and out end date
 def getEventsBeweenDates(startDate, endDate, eventList):
-
     start = datetime.datetime.strptime(startDate, '%m/%d/%Y')
     end = datetime.datetime.strptime(endDate, '%m/%d/%Y')
     data = []
@@ -188,7 +199,7 @@ def getDateFromSlot(rawDate):
         # to find out what type of date this is, we can split it and count how many parts we have see comments above.
         res = rawDate.split("-")
         # if we have 2 bits that include a 'W' week number
-        if (len(res) == 2 and res[1].index('W') > -1):
+        if (len(res) == 2 and res[1].find('W') > -1):
             dates = getWeekData(res)
             eventDate['startDate'] = dates['startDate'].strftime('%m/%d/%Y')
             eventDate['endDate'] = dates['endDate'].strftime('%m/%d/%Y')
@@ -206,6 +217,14 @@ def getDateFromSlot(rawDate):
         eventDate['endDate'] = (date + datetime.timedelta(hours=24)).strftime('%m/%d/%Y')
 
     return eventDate
+
+def getEventsByName(eventName, eventList):
+    data = []
+    for i in range(0,len(eventList),1):
+        if (eventList[i]['summary'].lower().find(eventName) > -1):
+            data.append(eventList[i])
+    
+    return data
 
 
 class LaunchRequestHandler(AbstractRequestHandler):
@@ -263,36 +282,37 @@ class SearchEventsIntentHandler(AbstractRequestHandler):
 
                             # Create output for both Alexa and the content card
                             cardContent = ""
-                            output = oneEventMessage;
+
+                            if (len(relevantEvents) > 0):
+                                output = oneEventMessage
+                                output += scheduledEventMessage
+
                             if (len(relevantEvents) > 1):
                                 output = multipleEventMessage.format(len(relevantEvents))
-                        
-                            output += scheduledEventMessage;
+                                output += scheduledEventMessage
 
                             if (len(relevantEvents) > 1):
                                 x = int(3)
-                                if len(relevantEvents) > 3:
+                                if len(relevantEvents) < 3:
                                     x = len(relevantEvents)
 
                                 output += firstThreeMessage.format(x)
                         
                             if (len(relevantEvents) > 0):
                                 date =  datetime.datetime.strptime(relevantEvents[0]['start'], '%m/%d/%Y')
-                                output += eventSummary.format("First", relevantEvents[0]['summary'], date.strftime('%A, %d. %B %Y') + ".");
+                                output += eventSummary.format("First", relevantEvents[0]['summary'], date.strftime('%A, %d. %B %Y') + ".")
                         
                             if (len(relevantEvents) > 1):
                                 date =  datetime.datetime.strptime(relevantEvents[1]['start'], '%m/%d/%Y')
-                                output += eventSummary.format("Second", relevantEvents[1]['summary'], date.strftime('%A, %d. %B %Y') + ".");
+                                output += eventSummary.format("Second", relevantEvents[1]['summary'], date.strftime('%A, %d. %B %Y') + ".")
                             
                             if (len(relevantEvents) > 2):
                                 date =  datetime.datetime.strptime(relevantEvents[2]['start'], '%m/%d/%Y')
-                                output += eventSummary.format("Third", relevantEvents[2]['summary'], date.strftime('%A, %d. %B %Y') + ".");
+                                output += eventSummary.format("Third", relevantEvents[2]['summary'], date.strftime('%A, %d. %B %Y') + ".")
                             
                             for i in range(0,len(relevantEvents), 1):
                                 date = datetime.datetime.strptime(relevantEvents[i]['start'], '%m/%d/%Y')
-                                cardContent += cardContentSummary.format(relevantEvents[i]['summary'], date.strftime('%A, %d. %B %Y') + "\n\n");
-                        
-                            output += eventNumberMoreInfoText;
+                                cardContent += cardContentSummary.format(relevantEvents[i]['summary'], date.strftime('%A, %d. %B %Y') + "\n\n")
 
                             handler_input.response_builder.speak(output).ask(haveEventsRepromt) \
                                             .set_card(SimpleCard(cardTitle, cardContent))
@@ -300,21 +320,28 @@ class SearchEventsIntentHandler(AbstractRequestHandler):
                             return handler_input.response_builder.response
                         else:
                             output = NoDataMessage
-                            handler_input.response_builder.ask(output)
+                            handler_input.response_builder.speak(output).ask(NoDataMessageAsk)
+
                             return handler_input.response_builder.response
                     else:
                         output = NoDataMessage
-                        handler_input.response_builder.ask(output)
+                        handler_input.response_builder.speak(output).ask(NoDataMessageAsk)
+
                         return handler_input.response_builder.response
                 else:
                     output = NoDataMessage
-                    handler_input.response_builder.ask(output)
+                    handler_input.response_builder.speak(output).ask(NoDataMessageAsk)
+
                     return handler_input.response_builder.response
             else:
-                handler_input.response_builder.ask("I'm sorry.  What day did you want me to look for events?", "I'm sorry.  What day did you want me to look for events?")
+                output = NoDataMessage
+                handler_input.response_builder.speak(output).ask(NoDataMessageAsk)
+
                 return handler_input.response_builder.response
         else:
-            handler_input.response_builder.ask("I'm sorry.  What day did you want me to look for events?", "I'm sorry.  What day did you want me to look for events?")
+            output = NoDataMessage
+            handler_input.response_builder.speak(output).ask(NoDataMessageAsk)
+
             return handler_input.response_builder.response
        
 class ReadEventIntentHandler(AbstractRequestHandler):
@@ -324,19 +351,79 @@ class ReadEventIntentHandler(AbstractRequestHandler):
         return ask_utils.is_intent_name("ReadEvent")(handler_input)
 
     def handle(self, handler_input):
+        parent = self
         slots = handler_input.request_envelope.request.intent.slots
-        eventDate = slots["EVENT_NAME"].value
+        if (slots is not None):
+            slotValue = slots["EVENT_NAME"].value
+            if (slotValue is not None):
+                # Read the Icalendar File here....
+                eventList = getCalendar(URL, readCalendar)
+                if (len(eventList) > 0):
+                    # Read slot data and parse out a usable date 
+                    eventName = slotValue.lower()
+                    if (eventName is not None):
+                        relevantEvents = getEventsByName(eventName, eventList)
 
-        # type: (HandlerInput) -> Response
-        speak_output = "I recognized your Read Event Intent"
+                    if (len(relevantEvents) > 0):
+                        # Create output for both Alexa and the content card
+                        cardContent = ""
 
-        return (
-            handler_input.response_builder
-                .speak(speak_output)
-                # .ask("add a reprompt if you want to keep the session open for the user to respond")
-                .response
-        )
+                        if (len(relevantEvents) > 0):
+                            output = oneEventMessage
+                            output += foundEventMessage
 
+                        if (len(relevantEvents) > 1):
+                            output = multipleEventMessage.format(len(relevantEvents))
+                            output += foundEventMessage
+                    
+                        if (len(relevantEvents) > 1):
+                            x = int(3)
+                            if len(relevantEvents) < 3:
+                                x = len(relevantEvents)
+
+                            output += firstThreeMessage.format(x)
+                        
+                        if (len(relevantEvents) > 0):
+                            date =  datetime.datetime.strptime(relevantEvents[0]['start'], '%m/%d/%Y')
+                            output += eventSummary.format("First", relevantEvents[0]['summary'], date.strftime('%A, %d. %B %Y') + ".")
+                    
+                        if (len(relevantEvents) > 1):
+                            date =  datetime.datetime.strptime(relevantEvents[1]['start'], '%m/%d/%Y')
+                            output += eventSummary.format("Second", relevantEvents[1]['summary'], date.strftime('%A, %d. %B %Y') + ".")
+                        
+                        if (len(relevantEvents) > 2):
+                            date =  datetime.datetime.strptime(relevantEvents[2]['start'], '%m/%d/%Y')
+                            output += eventSummary.format("Third", relevantEvents[2]['summary'], date.strftime('%A, %d. %B %Y') + ".")
+                        
+                        for i in range(0,len(relevantEvents), 1):
+                            date = datetime.datetime.strptime(relevantEvents[i]['start'], '%m/%d/%Y')
+                            cardContent += cardContentSummary.format(relevantEvents[i]['summary'], date.strftime('%A, %d. %B %Y') + "\n\n")
+
+                        handler_input.response_builder.speak(output).ask(haveEventsRepromt2) \
+                                        .set_card(SimpleCard(cardTitle, cardContent))
+
+                        return handler_input.response_builder.response
+                    else:
+                        output = NoDataMessage
+                        handler_input.response_builder.speak(output).ask(NoDataMessageAsk)
+
+                        return handler_input.response_builder.response
+                else:
+                    output = NoDataMessage
+                    handler_input.response_builder.speak(output).ask(NoDataMessageAsk)
+
+                    return handler_input.response_builder.response
+            else:
+                output = NoDataMessage
+                handler_input.response_builder.speak(output).ask(NoDataMessageAsk)
+
+                return handler_input.response_builder.response
+        else:
+            output = NoDataMessage
+            handler_input.response_builder.speak(output).ask(NoDataMessageAsk)
+
+            return handler_input.response_builder.response
+    
 class HelpIntentHandler(AbstractRequestHandler):
     """Handler for Help Intent."""
     def can_handle(self, handler_input):
